@@ -1,16 +1,9 @@
 import React, { useState } from 'react';
-import Anthropic from '@anthropic-ai/sdk';
-import { API_KEY } from './config';
 
 interface Message {
   text: string;
   sender: 'user' | 'bot';
 }
-
-const anthropic = new Anthropic({
-  apiKey: API_KEY,
-  dangerouslyAllowBrowser: true
-});
 
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([
@@ -21,14 +14,20 @@ export default function Chat() {
 
   const sendMessage = async (text: string) => {
     try {
-      const response = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 1024,
-        messages: [{ role: "user", content: text }]
+      const response = await fetch('http://localhost:3000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: text })
       });
 
-      console.log('API Response:', response);
-      return response.content[0].text;
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      return data.response;
     } catch (error) {
       console.error('Error details:', error);
       return 'Omlouvám se, ale momentálně nemohu odpovědět. Zkuste to prosím později.';
